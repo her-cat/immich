@@ -1,0 +1,32 @@
+name: Sync fork with upstream
+
+# 可选文件：如果你希望 fork 的 main 分支也跟随上游更新，保留此文件。
+# 采用 merge（不是 force reset），因此本仓库新增的 tzfix/ 与 .github/ 文件不会被冲掉。
+# 注意：构建并不依赖这个同步；tzfix-build.yml 已直接使用上游 release。
+on:
+  schedule:
+    - cron: '7 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ github.token }}
+
+      - name: Merge upstream main into fork main
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/immich-app/immich.git
+          git fetch --no-tags upstream main
+          git merge --no-edit upstream/main
+          git push origin main
